@@ -19,8 +19,21 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+        try {
+            buildUi();
+        } catch (Throwable t) {
+            // Show the real error instead of crashing silently.
+            ScrollView sc = new ScrollView(this);
+            TextView err = new TextView(this);
+            err.setText("Startup error:\n\n" + (t != null ? t.toString() : "unknown"));
+            err.setTextSize(14);
+            err.setPadding(24, 24, 24, 24);
+            sc.addView(err);
+            setContentView(sc);
+        }
+    }
 
+    private void buildUi() {
         boolean dark = Prefs.isDark(this);
         ScrollView scroll = new ScrollView(this);
         root = new LinearLayout(this);
@@ -29,7 +42,7 @@ public class MainActivity extends Activity {
         root.setPadding(32, 32, 32, 32);
         if (dark) root.setBackgroundColor(0xFF1B1C1E);
 
-        title("AI Keyboard ⌨️");
+        title("AI Keyboard");
 
         Button enable = btn("Enable keyboard", () ->
                 startActivity(new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)));
@@ -49,7 +62,7 @@ public class MainActivity extends Activity {
         sizeLabel.setText("Scale: " + Math.round(Prefs.getScale(this) * 100) + "%");
         root.addView(sizeLabel);
         SeekBar sb = new SeekBar(this);
-        sb.setMax(50); // 0.80 .. 1.30
+        sb.setMax(50);
         sb.setProgress((int) ((Prefs.getScale(this) - 0.8f) / 0.5f * 50));
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int p, boolean fromUser) {
@@ -73,7 +86,7 @@ public class MainActivity extends Activity {
 
         section("Tip");
         TextView tip = new TextView(this);
-        tip.setText("Inside the keyboard: tap ⚙ for settings, long-press the AI key to switch mode for one message.");
+        tip.setText("Inside the keyboard: tap gear for settings, long-press the AI key to switch mode.");
         tip.setTextSize(13);
         root.addView(tip);
 
