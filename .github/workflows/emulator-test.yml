@@ -38,31 +38,7 @@ jobs:
         with:
           api-level: 29
           arch: x86_64
-          script: |
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            echo "=== APP INSTALLED ==="
-            # Launch MainActivity
-            adb shell am start -n com.letmese.aikeyboard/.MainActivity || true
-            sleep 8
-            # Check if the app process is alive
-            if adb shell pidof com.letmese.aikeyboard > /dev/null; then
-              echo "=== APP IS RUNNING OK ==="
-            else
-              echo "=== APP DIED - CRASH ==="
-            fi
-            # Dump any crash logs
-            adb logcat -d | grep -A50 "FATAL EXCEPTION\|AndroidRuntime" > crash_log.txt || true
-            cat crash_log.txt
-            # Also test enabling + switching to the IME
-            adb shell ime enable com.letmese.aikeyboard/.AiKeyboardService || true
-            adb shell ime set com.letmese.aikeyboard/.AiKeyboardService || true
-            sleep 3
-            adb shell am start -a android.intent.action.VIEW -d "about:blank" || true
-            # open a text field context via settings search
-            adb shell input tap 200 200 || true
-            sleep 5
-            echo "=== FINAL LOGCAT CRASH SECTION ==="
-            adb logcat -d | grep -B5 -A80 "FATAL EXCEPTION" || echo "NO FATAL EXCEPTIONS FOUND"
+          script: bash .github/emulator-test.sh
 
       - name: Upload crash log artifact
         if: always()
