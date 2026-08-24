@@ -1,0 +1,72 @@
+name: Test on Emulator
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  emulator-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Run app on emulator and capture crashes
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          script: |
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            echo "=== APP INSTALLED ==="
+            # Launch MainActivity
+            adb shell am start -n com.letmese.aikeyboard/.MainActivity || true
+            sleep 8
+            # Check if the app process is alive
+            if adb shell pidof com.letmese.aikeyboard > /dev/null; then
+              echo "=== APP IS RUNNING OK ==="
+            else
+              echo "=== APP DIED - CRASH ==="
+            fi
+            # Dump any crash logs
+            adb logcat -d | grep -A50 "FATAL EXCEPTION\|AndroidRuntime" > crash_log.txt || true
+            cat crash_log.txt
+            # Also test enabling + switching to the IME
+            adb shell ime enable com.letmese.aikeyboard/.AiKeyboardService || true
+            adb shell ime set com.letmese.aikeyboard/.AiKeyboardService || true
+            sleep 3
+            adb shell am start -a android.intent.action.VIEW -d "about:blank" || true
+            # open a text field context via settings search
+            adb shell input tap 200 200 || true
+            sleep 5
+            echo "=== FINAL LOGCAT CRASH SECTION ==="
+            adb logcat -d | grep -B5 -A80 "FATAL EXCEPTION" || echo "NO FATAL EXCEPTIONS FOUND"
+
+      - name: Upload crash log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: emulator-crash-log
+          path: crash_log.txt
