@@ -8,6 +8,7 @@ import android.view.Gravity;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,7 +20,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         boolean dark = Prefs.isDark(this);
+        ScrollView scroll = new ScrollView(this);
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.TOP);
@@ -74,7 +77,8 @@ public class MainActivity extends Activity {
         tip.setTextSize(13);
         root.addView(tip);
 
-        setContentView(root);
+        scroll.addView(root);
+        setContentView(scroll);
     }
 
     private void title(String t) {
