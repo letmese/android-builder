@@ -18,6 +18,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileWriter;
+
 /**
  * AI Keyboard — SwiftKey-styled QWERTY with AI modes, adaptive sizing, and settings.
  */
