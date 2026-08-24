@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Minimal client for a FREE, keyless LLM endpoint.
  * Uses OpenCode Zen's free model endpoint (no API key needed).
+ * Supports multiple "modes" (grammar, formal, casual, social, translate).
  */
 public class AiClient {
 
@@ -17,12 +18,23 @@ public class AiClient {
             "https://opencode.ai/zen/v1/chat/completions";
     private static final String MODEL = "x-preview-f-free";
 
-    public static String complete(String prompt) throws Exception {
+    public enum Mode {
+        GRAMMAR("Fix grammar and spelling AND improve clarity. Reply ONLY with the corrected text."),
+        FORMAL("Rewrite the following in a professional, formal tone. Reply ONLY with the rewritten text."),
+        CASUAL("Rewrite the following in a relaxed, casual, friendly tone. Reply ONLY with the rewritten text."),
+        SOCIAL("Turn the following into an engaging social media post with emojis and hashtags. Reply ONLY with the post."),
+        TRANSLATE("Translate the following to English. Reply ONLY with the translation.");
+
+        final String instruction;
+        Mode(String instruction) { this.instruction = instruction; }
+    }
+
+    public static String complete(Mode mode, String text) throws Exception {
+        String prompt = mode.instruction + "\n\n" + text;
         String body = "{"
                 + "\"model\":\"" + MODEL + "\","
-                + "\"messages\":[{\"role\":\"user\",\"content\":"
-                + jsonEscape(prompt) + "}],"
-                + "\"max_tokens\":512}"
+                + "\"messages\":[{\"role\":\"user\",\"content\":" + jsonEscape(prompt) + "}],"
+                + "\"max_tokens\":640}"
                 .replace("\"messages\"", "\"messages\""); // keep structure intact
 
         HttpURLConnection conn = (HttpURLConnection) new URL(ENDPOINT).openConnection();

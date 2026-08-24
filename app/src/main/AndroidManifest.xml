@@ -18,8 +18,11 @@
                 android:resource="@xml/method" />
         </service>
 
-        <!-- Setup / settings activity -->
-        <activity android:name=".MainActivity" android:exported="true">
+        <!-- Setup / settings activity (launcher + default for ACTION_MAIN) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="stateAlwaysHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
