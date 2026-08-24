@@ -20,16 +20,12 @@ import java.io.PrintWriter;
 
 public class MainActivity extends Activity {
 
-    private LinearLayout root;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Catch ANY crash (even before/around inflation) and save it to a file.
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
                 writeCrash(e);
-                // also show it on screen
                 try {
                     ScrollView sc = new ScrollView(MainActivity.this);
                     TextView err = new TextView(MainActivity.this);
@@ -82,32 +78,53 @@ public class MainActivity extends Activity {
 
     private void buildUi() {
         boolean dark = Prefs.isDark(this);
+
         ScrollView scroll = new ScrollView(this);
-        root = new LinearLayout(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(dark ? 0xFF1B1C1E : 0xFFF2F3F5);
+
+        // Build everything as local vars, add each exactly once.
+        LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.TOP);
         root.setPadding(32, 32, 32, 32);
-        if (dark) root.setBackgroundColor(0xFF1B1C1E);
 
-        title("AI Keyboard");
+        TextView title = new TextView(this);
+        title.setText("AI Keyboard");
+        title.setTextSize(24);
+        root.addView(title);
 
-        Button enable = btn("Enable keyboard", () ->
-                startActivity(new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)));
+        Button enable = new Button(this);
+        enable.setText("Enable keyboard");
+        enable.setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)));
         root.addView(enable);
 
-        section("AI default mode (tap AI key uses this)");
+        TextView modeTitle = new TextView(this);
+        modeTitle.setText("AI default mode (tap AI key uses this)");
+        modeTitle.setTextSize(16);
+        modeTitle.setPadding(0, 24, 0, 4);
+        root.addView(modeTitle);
+
         for (final AiClient.Mode m : AiClient.Mode.values()) {
-            Button b = btn(AiKeyboardService.modeLabel(m), () -> {
+            Button b = new Button(this);
+            b.setText(AiKeyboardService.modeLabel(m));
+            b.setOnClickListener(v -> {
                 Prefs.setMode(this, m);
                 Toast.makeText(this, "Default AI mode: " + AiKeyboardService.modeLabel(m), Toast.LENGTH_SHORT).show();
             });
             root.addView(b);
         }
 
-        section("Keyboard size");
+        TextView sizeTitle = new TextView(this);
+        sizeTitle.setText("Keyboard size");
+        sizeTitle.setTextSize(16);
+        sizeTitle.setPadding(0, 24, 0, 4);
+        root.addView(sizeTitle);
+
         final TextView sizeLabel = new TextView(this);
         sizeLabel.setText("Scale: " + Math.round(Prefs.getScale(this) * 100) + "%");
         root.addView(sizeLabel);
+
         SeekBar sb = new SeekBar(this);
         sb.setMax(50);
         sb.setProgress((int) ((Prefs.getScale(this) - 0.8f) / 0.5f * 50));
@@ -124,35 +141,25 @@ public class MainActivity extends Activity {
         });
         root.addView(sb);
 
-        section("Appearance");
+        TextView appTitle = new TextView(this);
+        appTitle.setText("Appearance");
+        appTitle.setTextSize(16);
+        appTitle.setPadding(0, 24, 0, 4);
+        root.addView(appTitle);
+
         CheckBox darkCb = new CheckBox(this);
         darkCb.setText("Dark theme");
         darkCb.setChecked(dark);
         darkCb.setOnCheckedChangeListener((v, checked) -> Prefs.setDark(this, checked));
         root.addView(darkCb);
 
-        section("Tip");
         TextView tip = new TextView(this);
         tip.setText("Inside the keyboard: tap gear for settings, long-press the AI key to switch mode.");
         tip.setTextSize(13);
+        tip.setPadding(0, 24, 0, 4);
         root.addView(tip);
 
         scroll.addView(root);
         setContentView(scroll);
-    }
-
-    private void title(String t) {
-        TextView v = new TextView(this); v.setText(t); v.setTextSize(24);
-        root.addView(v);
-    }
-    private void section(String t) {
-        TextView v = new TextView(this); v.setText(t); v.setTextSize(16);
-        v.setPadding(0, 24, 0, 4); root.addView(v);
-    }
-    private Button btn(String label, Runnable action) {
-        Button b = new Button(this); b.setText(label);
-        b.setOnClickListener(v -> action.run());
-        root.addView(b);
-        return b;
     }
 }
