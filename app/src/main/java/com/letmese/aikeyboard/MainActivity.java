@@ -75,7 +75,7 @@ public class MainActivity extends Activity {
             File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
             File f = new File(dir, "aikeyboard_crash.txt");
             FileWriter w = new FileWriter(f, true);
-            w.write("==== crash ====\n" + toString(t) + "\n");
+            w.write("==== crash ====\n" + throwableText(t) + "\n");
             w.close();
         } catch (Throwable ignored) {}
     }
