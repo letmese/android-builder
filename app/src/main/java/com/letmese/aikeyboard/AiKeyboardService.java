@@ -1,6 +1,5 @@
 package com.letmese.aikeyboard;
 
-import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -14,9 +13,9 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -27,7 +26,7 @@ public class AiKeyboardService extends InputMethodService {
     private static final String[] ROWS = {"qwertyuiop", "asdfghjkl", "zxcvbnm"};
     private static final String[] NUM_ROW = {"1234567890"};
 
-    private EditText preview;
+    private TextView preview;
     private final StringBuilder composing = new StringBuilder();
     private boolean shiftOn = true;
     private boolean capsLock = false;
@@ -72,10 +71,12 @@ public class AiKeyboardService extends InputMethodService {
         root.addView(column, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
 
-        preview = new EditText(this);
+        // Display-only preview (TextView, NOT EditText — an EditText here makes
+        // Android try to open the keyboard for itself and crash).
+        preview = new TextView(this);
         preview.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14 * scale);
         preview.setTextColor(TXT);
-        preview.setHint("Type, then tap AI — or long-press AI for a mode");
+        preview.setHint("Type, then tap AI — or long-press AI to switch mode");
         preview.setMaxLines(2);
         preview.setBackground(rounded(BG_FN, (int) (10 * dp)));
         preview.setPadding((int) (10*dp), (int) (6*dp), (int) (10*dp), (int) (6*dp));
@@ -144,18 +145,25 @@ public class AiKeyboardService extends InputMethodService {
         bottom.addView(key(",", 1f, BG_KEY, new KeyHandler() { @Override public void onKey() { commitText(","); } }, 18f, keyH));
         bottom.addView(key(".", 1f, BG_KEY, new KeyHandler() { @Override public void onKey() { commitText("."); } }, 18f, keyH));
         bottom.addView(key("space", 3.6f, BG_KEY, new KeyHandler() { @Override public void onKey() { commitText(" "); } }, 14f, keyH));
-        // ⚙ opens settings; long-press AI shows mode picker
-        Button gear = key("⚙", 1f, BG_FN, new KeyHandler() {
-            @Override public void onKey() { openSettings(); }
-        }, 16f, keyH);
-        bottom.addView(gear);
+        // gear opens settings
+        bottom.addView(key("⚙", 1f, BG_FN, new KeyHandler() {
+            @Override public void onKey() { IntentHelper.launchSettings(AiKeyboardService.this); }
+        }, 16f, keyH));
+        // AI: tap = use current mode; long-press = cycle to next mode
         Button aiBtn = key("AI", 1.7f, BG_ACCENT, new KeyHandler() {
             @Override public void onKey() { runAi(Prefs.getMode(AiKeyboardService.this)); }
         }, 15f, keyH);
         aiBtn.setTextColor(TXT_ON_ACCENT);
         aiBtn.setTypeface(Typeface.DEFAULT_BOLD);
         aiBtn.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override public boolean onLongClick(View v) { showModePicker(); return true; }
+            @Override public boolean onLongClick(View v) {
+                AiClient.Mode cur = Prefs.getMode(AiKeyboardService.this);
+                AiClient.Mode[] all = AiClient.Mode.values();
+                AiClient.Mode next = all[(cur.ordinal() + 1) % all.length];
+                Prefs.setMode(AiKeyboardService.this, next);
+                Toast.makeText(AiKeyboardService.this, "AI mode: " + modeLabel(next), Toast.LENGTH_SHORT).show();
+                return true;
+            }
         });
         bottom.addView(aiBtn);
         Button enterBtn = key("⏎", 1.5f, BG_ACCENT, new KeyHandler() {
@@ -164,25 +172,6 @@ public class AiKeyboardService extends InputMethodService {
         enterBtn.setTextColor(TXT_ON_ACCENT);
         bottom.addView(enterBtn);
         keyArea.addView(bottom);
-    }
-
-    private void openSettings() {
-        IntentHelper.launchSettings(this);
-    }
-
-    private void showModePicker() {
-        final AiClient.Mode[] modes = AiClient.Mode.values();
-        CharSequence[] names = new CharSequence[modes.length];
-        for (int i = 0; i < modes.length; i++) names[i] = modeLabel(modes[i]);
-        new AlertDialog.Builder(this)
-                .setTitle("AI mode")
-                .setItems(names, new android.content.DialogInterface.OnClickListener() {
-                    @Override public void onClick(android.content.DialogInterface d, int which) {
-                        Prefs.setMode(AiKeyboardService.this, modes[which]);
-                        Toast.makeText(AiKeyboardService.this,
-                                "AI mode: " + modeLabel(modes[which]), Toast.LENGTH_SHORT).show();
-                    }
-                }).show();
     }
 
     static String modeLabel(AiClient.Mode m) {
@@ -253,15 +242,15 @@ public class AiKeyboardService extends InputMethodService {
         if (getCurrentInputConnection() != null) getCurrentInputConnection().commitText(s, 1);
         if (!s.equals(" ")) shiftOn = Character.isWhitespace(s.charAt(0)) || s.equals(".") || s.equals(",");
         composing.append(s);
-        preview.setText(composing.toString());
-        preview.setSelection(preview.getText().length());
+        updatePreview();
     }
     private void doBackspace() {
-        if (composing.length() > 0) {
-            composing.deleteCharAt(composing.length() - 1);
-            preview.setText(composing.toString()); preview.setSelection(preview.getText().length());
-        }
+        if (composing.length() > 0) composing.deleteCharAt(composing.length() - 1);
+        updatePreview();
         sendDownUpKeyEvents(KeyEvent.KEYCODE_DEL);
+    }
+    private void updatePreview() {
+        preview.setText(composing.toString());
     }
 
     private void runAi(final AiClient.Mode mode) {
@@ -281,7 +270,7 @@ public class AiKeyboardService extends InputMethodService {
                                     getCurrentInputConnection().commitText(out, 1);
                                 }
                                 composing.setLength(0); composing.append(out);
-                                preview.setText(out); preview.setSelection(out.length());
+                                updatePreview();
                             } else {
                                 Toast.makeText(AiKeyboardService.this, "AI returned empty — try again", Toast.LENGTH_SHORT).show();
                             }
