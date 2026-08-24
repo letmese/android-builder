@@ -33,7 +33,7 @@ public class MainActivity extends Activity {
                 try {
                     ScrollView sc = new ScrollView(MainActivity.this);
                     TextView err = new TextView(MainActivity.this);
-                    err.setText("Crash:\n\n" + toString(e));
+                    err.setText("Crash:\n\n" + throwableText(e));
                     err.setTextSize(13);
                     err.setPadding(24, 24, 24, 24);
                     sc.addView(err);
@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
             writeCrash(t);
             ScrollView sc = new ScrollView(this);
             TextView err = new TextView(this);
-            err.setText("Startup error:\n\n" + toString(t));
+            err.setText("Startup error:\n\n" + throwableText(t));
             err.setTextSize(14);
             err.setPadding(24, 24, 24, 24);
             sc.addView(err);
@@ -56,7 +56,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private String toString(Throwable t) {
+    private String throwableText(Throwable t) {
         StringBuilder sb = new StringBuilder();
         Throwable c = t;
         while (c != null) {
