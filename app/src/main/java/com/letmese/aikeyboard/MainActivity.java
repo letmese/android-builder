@@ -3,6 +3,7 @@ package com.letmese.aikeyboard;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
@@ -13,24 +14,70 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+
 public class MainActivity extends Activity {
 
     private LinearLayout root;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Catch ANY crash (even before/around inflation) and save it to a file.
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+                writeCrash(e);
+                // also show it on screen
+                try {
+                    ScrollView sc = new ScrollView(MainActivity.this);
+                    TextView err = new TextView(MainActivity.this);
+                    err.setText("Crash:\n\n" + toString(e));
+                    err.setTextSize(13);
+                    err.setPadding(24, 24, 24, 24);
+                    sc.addView(err);
+                    setContentView(sc);
+                } catch (Throwable ignored) {}
+            }
+        });
+
         try {
             buildUi();
         } catch (Throwable t) {
-            // Show the real error instead of crashing silently.
+            writeCrash(t);
             ScrollView sc = new ScrollView(this);
             TextView err = new TextView(this);
-            err.setText("Startup error:\n\n" + (t != null ? t.toString() : "unknown"));
+            err.setText("Startup error:\n\n" + toString(t));
             err.setTextSize(14);
             err.setPadding(24, 24, 24, 24);
             sc.addView(err);
             setContentView(sc);
         }
+    }
+
+    private String toString(Throwable t) {
+        StringBuilder sb = new StringBuilder();
+        Throwable c = t;
+        while (c != null) {
+            sb.append(c.getClass().getSimpleName()).append(": ").append(c.getMessage()).append("\n");
+            for (StackTraceElement s : c.getStackTrace()) {
+                sb.append("  at ").append(s.toString()).append("\n");
+            }
+            c = c.getCause();
+            if (c != null) sb.append("Caused by:\n");
+        }
+        return sb.toString();
+    }
+
+    private void writeCrash(Throwable t) {
+        try {
+            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            File f = new File(dir, "aikeyboard_crash.txt");
+            FileWriter w = new FileWriter(f, true);
+            w.write("==== crash ====\n" + toString(t) + "\n");
+            w.close();
+        } catch (Throwable ignored) {}
     }
 
     private void buildUi() {
