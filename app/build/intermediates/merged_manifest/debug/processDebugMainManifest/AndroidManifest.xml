@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.letmese.aikeyboard"
-    android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionCode="20"
+    android:versionName="2.5" >
 
     <uses-sdk
         android:minSdkVersion="24"
         android:targetSdkVersion="34" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <permission
         android:name="com.letmese.aikeyboard.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
@@ -22,8 +25,6 @@
         android:extractNativeLibs="false"
         android:label="AI Keyboard"
         android:theme="@style/Theme.MyApp" >
-
-        <!-- The keyboard service -->
         <service
             android:name="com.letmese.aikeyboard.AiKeyboardService"
             android:exported="true"
@@ -37,10 +38,11 @@
                 android:resource="@xml/method" />
         </service>
 
-        <!-- Setup / settings activity -->
         <activity
             android:name="com.letmese.aikeyboard.MainActivity"
-            android:exported="true" >
+            android:exported="true"
+            android:theme="@style/Theme.MyApp"
+            android:windowSoftInputMode="stateAlwaysHidden" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

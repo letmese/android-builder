@@ -53,9 +53,32 @@ public class AiKeyboardService extends InputMethodService {
     @Override
     public void onCreate() {
         super.onCreate();
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override public void uncaughtException(Thread t, Throwable e) {
+                try {
+                    File f = new File(getFilesDir(), "aikeyboard_crash.txt");
+                    FileWriter w = new FileWriter(f, true);
+                    w.write("==== SERVICE crash ====\n" + throwableText(e) + "\n");
+                    w.close();
+                } catch (Throwable ignored) {}
+                System.exit(1);
+            }
+        });
         dp = getResources().getDisplayMetrics().density;
         scale = Prefs.getScale(this);
         dark = Prefs.isDark(this);
+    }
+
+    private String throwableText(Throwable t) {
+        StringBuilder sb = new StringBuilder();
+        Throwable c = t;
+        while (c != null) {
+            sb.append(c.getClass().getSimpleName()).append(": ").append(c.getMessage()).append("\n");
+            for (StackTraceElement s : c.getStackTrace()) sb.append("  at ").append(s.toString()).append("\n");
+            c = c.getCause();
+            if (c != null) sb.append("Caused by:\n");
+        }
+        return sb.toString();
     }
 
     @Override

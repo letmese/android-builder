@@ -3,7 +3,6 @@ package com.letmese.aikeyboard;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.Settings;
 import android.view.Gravity;
 import android.widget.Button;
@@ -68,8 +67,7 @@ public class MainActivity extends Activity {
 
     private void writeCrash(Throwable t) {
         try {
-            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File f = new File(dir, "aikeyboard_crash.txt");
+            File f = new File(getFilesDir(), "aikeyboard_crash.txt");
             FileWriter w = new FileWriter(f, true);
             w.write("==== crash ====\n" + throwableText(t) + "\n");
             w.close();
