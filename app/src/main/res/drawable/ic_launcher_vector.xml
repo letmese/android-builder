@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Keyboard icon: rounded rect background -->
+    <path
+        android:fillColor="#3D5AFE"
+        android:pathData="M18,18h72v72h-72z"
+        android:strokeWidth="0" />
+    <!-- Three rows of keyboard keys -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,40L80,40L80,48L28,48Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,52L78,52L78,60L30,60Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,64L80,64L80,72L28,72Z" />
+    <!-- AI badge -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,28L58,28L58,36L50,36Z"
+        android:strokeWidth="0" />
+</vector>
