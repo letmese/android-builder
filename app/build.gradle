@@ -4,12 +4,12 @@ plugins {
 
 android {
     namespace 'com.letmese.aikeyboard'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.letmese.aikeyboard"
         minSdk 24
-        targetSdk 34
+        targetSdk 35
         versionCode 50
         versionName "2.8"
     }
